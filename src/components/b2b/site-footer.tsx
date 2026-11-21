@@ -1,5 +1,6 @@
 import { Logo } from './logo'
 import { Link } from 'react-router-dom'
+import { StarPattern } from './star'
 
 type FooterLink = { label: string; href: string }
 
@@ -35,7 +36,13 @@ function Anchor({ href, ...rest }: React.AnchorHTMLAttributes<HTMLAnchorElement>
 
 export function SiteFooter() {
   return (
-    <footer id="contact" className="border-t border-border bg-ink text-bone">
+    <footer id="contact" className="relative isolate overflow-hidden border-t border-border bg-ink text-bone">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 text-bone [mask-image:linear-gradient(to_bottom,transparent,black_35%,black)]"
+      >
+        <StarPattern className="opacity-[0.14]" />
+      </div>
       <div className="mx-auto max-w-7xl px-5 pt-20 sm:px-8">
         <div className="grid gap-12 md:grid-cols-12">
           <div className="md:col-span-5">
@@ -46,7 +53,7 @@ export function SiteFooter() {
           <nav aria-label="Pied de page" className="grid grid-cols-2 gap-10 sm:grid-cols-3 md:col-span-7">
             {columns.map((column) => (
               <div key={column.title}>
-                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{column.title}</h2>
+                <h2 className="text-xs font-bold font-label uppercase tracking-[0.2em] text-muted-foreground">{column.title}</h2>
                 <ul className="mt-5 flex flex-col gap-3">
                   {column.links.map((link) => (
                     <li key={link.label}>

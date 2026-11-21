@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "textures": "python3 scripts/make-twill-maps.py",
+    "optimize:models": "for f in public/models/*.glb; do npx --yes @gltf-transform/cli optimize \"$f\" \"$f\" --compress meshopt --texture-compress webp --texture-size 1024; done"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

@@ -48,9 +48,10 @@ export function Shop({ onPurchase }: { onPurchase: (label: string) => void }) {
     <section
       id="shop"
       aria-labelledby="shop-title"
-      className="flex flex-col bg-black lg:min-h-[max(120svh,1000px)] lg:flex-row"
+      className="bg-black"
     >
-      <div className="relative h-[92svh] min-h-[640px] lg:h-auto lg:min-h-0 lg:flex-1">
+      <div className="relative flex flex-col lg:block lg:h-[max(100svh,780px)]">
+      <div className="relative h-[75svh] min-h-[520px] lg:absolute lg:inset-0 lg:h-auto lg:min-h-0">
         <GarmentViewer kind={kind} colorway={colorway} />
 
         <div
@@ -99,13 +100,13 @@ export function Shop({ onPurchase }: { onPurchase: (label: string) => void }) {
         id="product-panel"
         role="tabpanel"
         aria-labelledby={`tab-${kind}`}
-        className="flex w-full flex-col bg-black px-5 py-10 text-bone sm:px-8 lg:w-[440px] lg:shrink-0 lg:justify-center lg:py-28 xl:w-[480px]"
+        className="relative z-20 flex w-full flex-col bg-black px-5 py-10 text-bone sm:px-8 lg:absolute lg:bottom-6 lg:right-6 lg:top-24 lg:w-[420px] lg:justify-center lg:overflow-y-auto lg:rounded-3xl lg:border lg:border-white/15 lg:bg-black/45 lg:p-7 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_30px_80px_-30px_rgba(0,0,0,0.8)] lg:backdrop-blur-2xl"
       >
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-magenta px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
             {product.weight}
           </span>
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">{product.tagline}</span>
+          <span className="text-xs font-bold font-label uppercase tracking-[0.2em] text-muted-foreground">{product.tagline}</span>
         </div>
         <div className="mt-5 flex items-baseline justify-between gap-4">
           <h3 className="text-3xl font-black tracking-tight">{product.name}</h3>
@@ -114,7 +115,7 @@ export function Shop({ onPurchase }: { onPurchase: (label: string) => void }) {
         <p className="mt-4 text-pretty text-sm leading-relaxed text-bone/70">{product.description}</p>
 
         <fieldset className="mt-7">
-          <legend className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          <legend className="text-xs font-bold font-label uppercase tracking-[0.2em] text-muted-foreground">
             Couleur : <span className="text-bone">{colorway.name}</span>
           </legend>
           <div className="mt-3 flex flex-wrap gap-3">
@@ -139,9 +140,9 @@ export function Shop({ onPurchase }: { onPurchase: (label: string) => void }) {
         </fieldset>
 
         <fieldset className="mt-7">
-          <legend className="flex w-full items-center justify-between text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          <legend className="flex w-full items-center justify-between text-xs font-bold font-label uppercase tracking-[0.2em] text-muted-foreground">
             Taille
-            <Link to="/size-guide" className="font-bold uppercase tracking-[0.2em] text-magenta underline underline-offset-4 hover:text-bone">Guide des tailles</Link>
+            <Link to="/size-guide" className="font-bold font-label uppercase tracking-[0.2em] text-magenta underline underline-offset-4 hover:text-bone">Guide des tailles</Link>
           </legend>
           <div className="mt-3 grid grid-cols-6 gap-2">
             {product.sizes.map((s) => (
@@ -192,10 +193,12 @@ export function Shop({ onPurchase }: { onPurchase: (label: string) => void }) {
           <li>Expédié sous 48 h</li>
         </ul>
 
-        <div className="mt-8 border-t border-border pt-6">
-          <Gallery key={kind} images={product.gallery} />
-        </div>
       </aside>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+        <Gallery key={kind} images={product.gallery} />
+      </div>
     </section>
   )
 }

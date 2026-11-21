@@ -6,9 +6,9 @@ import { cn } from '@/lib/utils'
 import { Logo } from './logo'
 
 const links = [
+  { href: '#shop', label: 'Boutique' },
   { href: '#why', label: 'Pourquoi' },
   { href: '#craft', label: 'Savoir-faire' },
-  { href: '#shop', label: 'Boutique' },
   { href: '#contact', label: 'Contact' },
 ]
 
@@ -43,6 +43,13 @@ export function SiteHeader({ visible, bagCount }: { visible: boolean; bagCount: 
             </li>
           ))}
         </ul>
+        <div className="flex items-center gap-2">
+        <a
+          href="#shop"
+          className="hidden rounded-full bg-magenta px-4 py-2 text-sm font-black text-white transition-transform hover:scale-105 sm:inline-flex"
+        >
+          Acheter
+        </a>
         <a
           href="#shop"
           className="inline-flex items-center gap-2 rounded-full border border-bone/25 px-4 py-2 text-sm font-medium text-bone transition-colors hover:bg-bone hover:text-ink"
@@ -53,6 +60,7 @@ export function SiteHeader({ visible, bagCount }: { visible: boolean; bagCount: 
             ({bagCount})
           </span>
         </a>
+        </div>
       </nav>
     </header>
   )

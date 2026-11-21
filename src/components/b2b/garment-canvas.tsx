@@ -1,8 +1,8 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useRef, type ComponentRef } from 'react'
+import { Suspense, useEffect, useState, useMemo, useRef, type ComponentRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { ContactShadows, Environment, OrbitControls, useTexture } from '@react-three/drei'
+import { ContactShadows, Environment, OrbitControls, useGLTF, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Colorway, GarmentKind } from '@/lib/products'
 import { LOGO_PATHS, LOGO_VIEWBOX } from '@/lib/logo-paths'
@@ -129,6 +129,107 @@ function usePrintTextures(color: string) {
   }, [color])
 }
 
+const MODEL_URL: Record<GarmentKind, string> = { tee: '/models/tee.glb', hoodie: '/models/hoodie.glb' }
+
+/** Sergé en matériau PBR : albédo + normal + rugosité + reflet « sheen » du coton. */
+function useFabricMaterial(color: string) {
+  const maps = useTexture(
+    { map: '/textures/twill-albedo.jpg', normalMap: '/textures/twill-normal.jpg', roughnessMap: '/textures/twill-rough.jpg' },
+    (loaded) => {
+      const list = Array.isArray(loaded) ? loaded : Object.values(loaded as Record<string, THREE.Texture>)
+      list[0].colorSpace = THREE.SRGBColorSpace // l'albédo est en sRGB, les autres cartes sont linéaires
+      list.forEach((t) => {
+        t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping
+        t.repeat.set(4, 4)
+        t.anisotropy = 8
+      })
+    },
+  )
+  return useMemo(() => {
+    return new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color(color),
+      map: maps.map,
+      normalMap: maps.normalMap,
+      normalScale: new THREE.Vector2(0.9, 0.9),
+      roughnessMap: maps.roughnessMap,
+      roughness: 1,
+      metalness: 0,
+      sheen: 0.8,
+      sheenRoughness: 0.65,
+      sheenColor: new THREE.Color('#ffffff'),
+    })
+    // la couleur est animée dans useFrame ; on ne recrée pas le matériau quand elle change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maps])
+}
+
+/** Vérifie si un vrai modèle .glb est présent dans /public/models (Vite renvoie du HTML s'il manque). */
+const modelChecks = new Map<GarmentKind, Promise<boolean>>()
+function useModelAvailable(kind: GarmentKind) {
+  const [result, setResult] = useState<{ kind: GarmentKind; ok: boolean } | null>(null)
+  useEffect(() => {
+    let alive = true
+    if (!modelChecks.has(kind)) {
+      modelChecks.set(
+        kind,
+        fetch(MODEL_URL[kind], { method: 'HEAD' })
+          .then((r) => r.ok && !(r.headers.get('content-type') ?? '').includes('text/html'))
+          .catch(() => false),
+      )
+    }
+    modelChecks.get(kind)!.then((ok) => alive && setResult({ kind, ok }))
+    return () => {
+      alive = false
+    }
+  }, [kind])
+  return result?.kind === kind ? result.ok : null
+}
+
+// Les UV des modèles CLO n'ont pas la même échelle : le tee est en « patron » (≈ millimètres, de -390 à 300),
+// le hoodie est un atlas 0 → 1. On règle la répétition du sergé pour obtenir un fil d'environ 2 cm.
+const WEAVE_REPEAT: Record<GarmentKind, number> = { tee: 0.05, hoodie: 14 }
+
+const TARGET_HEIGHT: Record<GarmentKind, number> = { tee: 2.5, hoodie: 2.8 }
+
+/** Vrai modèle 3D : normalisé (taille, centrage), matériau sergé appliqué. Les logos seront peints dans les textures (Substance Painter). */
+function GltfGarment({ kind, fabric }: { kind: GarmentKind; fabric: THREE.Material }) {
+  const gltf = useGLTF(MODEL_URL[kind])
+  const material = useMemo(() => {
+    const m = (fabric as THREE.MeshPhysicalMaterial).clone()
+    ;(['map', 'normalMap', 'roughnessMap'] as const).forEach((key) => {
+      const t = m[key]
+      if (!t) return
+      const c = t.clone()
+      c.repeat.set(WEAVE_REPEAT[kind], WEAVE_REPEAT[kind])
+      c.needsUpdate = true
+      m[key] = c
+    })
+    return m
+  }, [fabric, kind])
+  useFrame(() => material.color.copy((fabric as THREE.MeshPhysicalMaterial).color))
+  const scene = useMemo(() => {
+    const root = gltf.scene.clone(true)
+    root.traverse((o) => {
+      const m = o as THREE.Mesh
+      if (m.isMesh) {
+        m.material = material
+        m.castShadow = true
+        m.receiveShadow = true
+      }
+    })
+    const b = new THREE.Box3().setFromObject(root)
+    const size = b.getSize(new THREE.Vector3())
+    const k = TARGET_HEIGHT[kind] / size.y
+    root.scale.multiplyScalar(k)
+    const b2 = new THREE.Box3().setFromObject(root)
+    const c = b2.getCenter(new THREE.Vector3())
+    root.position.sub(c)
+    return root
+  }, [gltf, material, kind])
+
+  return <primitive object={scene} />
+}
+
 function Garment({
   kind,
   colorway,
@@ -147,23 +248,7 @@ function Garment({
   const appear = useRef(0)
   const targetColor = useMemo(() => new THREE.Color(colorway.garment), [colorway.garment])
 
-  const twill = useTexture('/images/twill-370.png', (texture) => {
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping
-    texture.repeat.set(3, 3)
-  })
-
-  const fabric = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color(colorway.garment),
-        roughness: 0.92,
-        metalness: 0,
-        bumpMap: twill,
-        bumpScale: 1.4,
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [twill],
-  )
+  const fabric = useFabricMaterial(colorway.garment)
   const lining = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 1, color: '#000' }), [])
   const aglet = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 0.8, color: '#bdbdbd' }), [])
 
@@ -250,6 +335,18 @@ function Garment({
   })
 
   const isHoodie = kind === 'hoodie'
+  const hasModel = useModelAvailable(kind)
+  if (hasModel === null) return <group ref={group} />
+
+  if (hasModel) {
+    return (
+      <group ref={group}>
+        <Suspense fallback={null}>
+          <GltfGarment kind={kind} fabric={fabric} />
+        </Suspense>
+      </group>
+    )
+  }
 
   return (
     <group ref={group}>
@@ -303,7 +400,7 @@ export default function GarmentCanvas(props: {
   return (
     <Canvas
       dpr={[1, 2]}
-      camera={{ position: [0, 0.15, 4.6], fov: 38 }}
+      camera={{ position: [0, 0.2, 6.4], fov: 38 }}
       gl={{ antialias: true, alpha: true }}
       aria-label={`Vue 3D du ${props.kind === 'tee' ? 'tee' : 'hoodie'}, couleur ${props.colorway.name}`}
     >

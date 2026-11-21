@@ -59,12 +59,12 @@ export function SizeGuide() {
         <div className="mt-14 grid gap-14 lg:grid-cols-2">
           {kinds.map((kind) => (
             <section key={kind} aria-labelledby={`guide-${kind}`}>
-              <h2 id={`guide-${kind}`} className="text-xs font-bold uppercase tracking-[0.2em] text-magenta">
+              <h2 id={`guide-${kind}`} className="text-xs font-bold font-label uppercase tracking-[0.2em] text-magenta">
                 {titles[kind]} · mesures à plat en cm
               </h2>
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[420px] text-left text-sm tabular-nums">
-                  <thead className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+                  <thead className="text-xs font-label uppercase tracking-[0.15em] text-muted-foreground">
                     <tr className="border-b border-bone/25">
                       <th className="py-2 pr-4 font-bold">Taille</th>
                       <th className="py-2 pr-4 font-bold">Poitrine</th>

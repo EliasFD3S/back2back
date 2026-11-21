@@ -15,7 +15,7 @@ export function Gallery({ images }: { images: { src: string; alt: string }[] }) 
   return (
     <div>
       <div className="flex items-baseline justify-between gap-4">
-        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">En vrai</h4>
+        <h4 className="text-xs font-bold font-label uppercase tracking-[0.2em] text-muted-foreground">En vrai</h4>
         <span className="text-xs text-muted-foreground">{images.length} photos</span>
       </div>
       <ul className="mt-3 grid grid-cols-3 gap-2">

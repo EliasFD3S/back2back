@@ -46,9 +46,9 @@ export function Experience() {
       <SiteHeader visible={ready} bagCount={bagCount} />
       <main>
         <Hero ready={ready} />
+        <Shop onPurchase={handlePurchase} />
         <Mission />
         <Craft />
-        <Shop onPurchase={handlePurchase} />
       </main>
       <SiteFooter />
       <p className="sr-only" aria-live="polite">
