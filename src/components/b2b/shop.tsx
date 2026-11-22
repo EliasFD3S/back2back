@@ -188,7 +188,6 @@ export function Shop({ onPurchase }: { onPurchase: (label: string) => void }) {
           )}
         </button>
         <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-          <li>Livraison offerte dès 150 €</li>
           <li>Retours sous 30 jours</li>
           <li>Expédié sous 48 h</li>
         </ul>
