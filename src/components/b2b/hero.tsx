@@ -8,15 +8,10 @@ export function Hero({ ready }: { ready: boolean }) {
 
   return (
     <section id="top" aria-label="Introduction" className="grain relative isolate flex h-svh min-h-[600px] flex-col overflow-hidden">
-      <video
-        className="absolute inset-0 -z-20 size-full object-cover"
-        src="/video/hero.mp4"
-        poster="/video/hero-poster.jpg"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
+      <img
+        className="hero-background absolute inset-0 -z-20 size-full object-cover"
+        src="/images/hero.png"
+        alt=""
         aria-hidden="true"
       />
       <div

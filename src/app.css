@@ -115,9 +115,28 @@
   }
 }
 
+.hero-background {
+  animation: hero-zoom 5s ease-in-out infinite;
+}
+
+@keyframes hero-zoom {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .hero-background {
+    animation: none;
   }
 
   .reveal {
