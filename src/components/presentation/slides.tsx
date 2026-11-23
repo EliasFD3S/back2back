@@ -5,13 +5,16 @@ import { glass } from '@/lib/ui'
 import { products } from '@/lib/products'
 import {
   breakeven,
+  cash,
   funding,
+  fundingDetail,
   keyFigures,
   marketing,
   money,
   orders,
   pnl,
   priceBuild,
+  scenarioTable,
   scenarios,
   sensitivities,
   fmt,
@@ -28,6 +31,8 @@ export type SlideDef = {
   notes: string
   /** Fond de la diapo : sergé (texture du site) ou motif d'étoiles. */
   bg?: 'twill' | 'stars'
+  /** Diapo d'annexe : hors déroulé, accessible seulement avec la touche A (questions du jury). */
+  appendix?: boolean
   node: ReactNode
 }
 
@@ -37,6 +42,10 @@ const Frame = ({ children, className }: { children: ReactNode; className?: strin
 
 const teeImg = products.tee.gallery[0].src
 const hoodieImg = products.hoodie.gallery[0].src
+/** Slide 4 : hoodie de dos, logo bien visible. */
+const hoodieBackImg = products.hoodie.gallery[1].src
+/** Pastilles vives, aux couleurs de la marque (la palette du site était jugée triste). */
+const brandSwatches = ['#ff2bd6', '#efebe3', '#7b2cff', '#ffd400', '#161616']
 
 /* ------------------------------------------------------------------ 1 */
 const cover: SlideDef = {
@@ -199,15 +208,15 @@ const product: SlideDef = {
         <div className="flex flex-1 gap-6">
           {[
             { src: teeImg, name: 'Tee', alt: 'Tee BACK2BACK' },
-            { src: hoodieImg, name: 'Hoodie', alt: 'Hoodie BACK2BACK' },
+            { src: hoodieBackImg, name: 'Hoodie', alt: 'Hoodie BACK2BACK, vue de dos' },
           ].map((p, k) => (
             <R key={p.name} anim="z" className={cn('relative flex-1 overflow-hidden rounded-[32px] ring-1 ring-white/20', k === 1 && 'mt-14')}>
               <img src={p.src} alt={p.alt} className="size-full object-cover" />
               <div className={cn(glass, 'absolute inset-x-4 bottom-4 flex items-center justify-between px-6 py-4 text-[28px]')}>
                 <span className="font-bold">{p.name}</span>
                 <span className="flex gap-2">
-                  {products[k === 0 ? 'tee' : 'hoodie'].colorways.map((c) => (
-                    <i key={c.name} className="block size-6 rounded-full ring-1 ring-white/40" style={{ backgroundColor: c.garment }} />
+                  {brandSwatches.map((c) => (
+                    <i key={c} className="block size-6 rounded-full ring-1 ring-white/50" style={{ backgroundColor: c }} />
                   ))}
                 </span>
               </div>
@@ -224,7 +233,7 @@ const fabric: SlideDef = {
   id: 'matiere',
   speaker: 'Intervenant 2',
   notes:
-    "Un coton sergé épais d'environ 240 g/m², contre 150 à 180 g/m² pour un jersey classique. Trois bénéfices : opacité qui dissimule les reliefs, résistance aux frottements (le sergé sert aux vêtements de travail), et une coupe oversize qui facilite l'enfilage sans comprimer le corset. Le coton reste agréable et respirant.",
+    "Un coton sergé épais d'environ 240 g/m², contre 140 à 160 g/m² pour un tee-shirt fast fashion (15 à 30 lavages) et 180 à 220 g/m² pour un tee-shirt premium (30 à 56 lavages). Le nôtre vise 60 à 80 lavages. Trois bénéfices : opacité qui dissimule les reliefs, résistance aux frottements (le sergé sert aux vêtements de travail), et une coupe oversize qui facilite l'enfilage sans comprimer le corset. Le coton reste agréable et respirant.",
   bg: 'twill',
   node: (
     <Frame>
@@ -233,19 +242,21 @@ const fabric: SlideDef = {
         Un sergé plus épais, <Mag>qui tient.</Mag>
       </H2>
       <div className="flex flex-1 gap-8">
-        <R className={cn(glass, 'flex w-[640px] flex-col p-9')}>
-          <p className="text-[36px] font-black leading-tight">Épaisseur du tissu</p>
-          <p className="mt-1 text-[24px] text-bone/60">Grammes par mètre carré</p>
-          <div className="mt-6 flex flex-1 items-end gap-8">
+        <R className={cn(glass, 'flex w-[900px] flex-col p-9')}>
+          <p className="text-[36px] font-black leading-tight">Épaisseur et durée de vie</p>
+          <p className="mt-1 text-[24px] text-bone/60">Grammage et nombre de lavages tenus</p>
+          <div className="mt-6 flex flex-1 items-end gap-6">
             {[
-              { label: 'Jersey classique', value: '150 à 180', h: 68, mine: false },
-              { label: 'BACK2BACK', value: '240', h: 100, mine: true },
+              { label: 'Tee-shirt fast fashion', value: '140-160', wash: '15-30 lavages', h: 58, mine: false },
+              { label: 'Tee-shirt premium', value: '180-220', wash: '30-56 lavages', h: 80, mine: false },
+              { label: 'Tee-shirt BACK2BACK', value: '240', wash: '60-80 lavages', h: 100, mine: true },
             ].map((c, k) => (
               <div key={c.label} className="flex h-full flex-1 flex-col justify-end gap-3">
                 <span className={cn('whitespace-nowrap text-[40px] font-black leading-none tabular-nums', c.mine ? 'text-magenta' : 'text-bone/60')}>
                   {c.value}
                   <span className="block pt-1 text-[22px] font-bold">g/m²</span>
                 </span>
+                <span className={cn('whitespace-nowrap text-[26px] font-bold', c.mine ? 'text-magenta' : 'text-bone/60')}>{c.wash}</span>
                 <div className="relative flex-1">
                   <div
                     className={cn(
@@ -261,7 +272,7 @@ const fabric: SlideDef = {
                     />
                   </div>
                 </div>
-                <span className={cn('text-[26px] font-bold', c.mine ? 'text-bone' : 'text-bone/60')}>{c.label}</span>
+                <span className={cn('text-[24px] font-bold leading-tight', c.mine ? 'text-bone' : 'text-bone/60')}>{c.label}</span>
               </div>
             ))}
           </div>
@@ -353,7 +364,7 @@ const price: SlideDef = {
           <Stat accent label="coût moyen d'une pièce livrée (55 % de tee-shirts, 45 % de hoodies)">
             <Count to={7.25} d={2} suffix=" €" />
           </Stat>
-          <Stat label="prix moyen TTC par pièce">
+          <Stat label="prix moyen TTC par pièce : 55 % × 40 € + 45 % × 80 €">
             <Count to={58} suffix=" €" />
           </Stat>
         </div>
@@ -369,7 +380,7 @@ const market: SlideDef = {
   speaker: 'Intervenant 3',
   minutes: '1 min 55',
   notes:
-    "À qui vendre ? D'abord les ados européens qui portent un corset et leurs parents, souvent décisionnaires. Estimation : 0,3 % de jeunes porteurs parmi 33,2 millions de jeunes de 11 à 17 ans dans l'UE, soit environ 99 600 personnes. Attention : 0,3 % est une hypothèse de travail, pas une statistique officielle européenne.",
+    "À qui vendre ? D'abord les ados européens qui portent un corset et leurs parents, souvent décisionnaires. La prévalence de 0,3 % est la moyenne de deux études scientifiques : c'est une statistique, pas une hypothèse. Appliquée aux 33,2 millions de jeunes de 11 à 17 ans dans l'UE, elle donne environ 99 600 porteurs. Sur trois ans, nos prévisions représentent environ 9 600 familles clientes, soit près de 10 % de ce marché.",
   node: (
     <Frame>
       <Chip>06 · Le marché</Chip>
@@ -380,7 +391,7 @@ const market: SlideDef = {
         {[
           { w: '100%', n: <Count to={33.2} d={1} suffix=" M" />, t: 'jeunes de 11 à 17 ans dans l’Union européenne', bg: 'bg-white/[0.07]' },
           { w: '78%', n: <Count to={99600} />, t: 'jeunes porteurs de corset (0,3 %, fourchette de 66 400 à 132 800)', bg: 'bg-magenta/35 border-magenta/60' },
-          { w: '72%', n: <Count to={7.9} d={1} suffix=" %" />, t: 'des porteurs devenus clients fin A3 (1,5 % fin A1, 5,1 % fin A2)', bg: 'bg-magenta' },
+          { w: '72%', n: <Count to={9600} />, t: 'familles clientes visées sur 3 ans, soit environ 10 % du marché', bg: 'bg-magenta' },
         ].map((r, k) => (
           <R
             key={k}
@@ -393,7 +404,7 @@ const market: SlideDef = {
         ))}
       </div>
       <Foot>
-        Le taux de 0,3 % est une hypothèse de travail de l'équipe, pas une statistique officielle. Suisse non comptée dans la base, ce qui est prudent.
+        Prévalence de 0,3 % : moyenne de deux études scientifiques. Suisse non comptée dans la base, ce qui est prudent.
       </Foot>
     </Frame>
   ),
@@ -404,7 +415,7 @@ const twoSteps: SlideDef = {
   id: 'strategie',
   speaker: 'Intervenant 3',
   notes:
-    "Développement en deux temps. D'abord les ados porteurs de corset, puis les ados qui ne portent pas de corset mais aiment notre univers. Exemples : The North Face et Patagonia, partis d'un besoin précis pour devenir des références de la mode quotidienne. On ne dépend ainsi pas d'une niche au volume limité.",
+    "Développement en deux temps. D'abord les ados porteurs de corset, puis les ados qui ne portent pas de corset mais aiment notre univers. Exemples : The North Face et Carhartt, partis d'un besoin précis pour devenir des références de la mode quotidienne. On ne dépend ainsi pas d'une niche au volume limité.",
   node: (
     <Frame>
       <Chip>07 · La stratégie</Chip>
@@ -416,11 +427,11 @@ const twoSteps: SlideDef = {
           <span className="font-label text-[22px] font-bold uppercase tracking-[0.14em] text-bone/60">Temps 1 · années 1 et 2</span>
           <h3 className="text-[48px] font-black leading-tight">Les ados porteurs de corset</h3>
           <p className="text-[28px] text-bone/75">Cible : jeunes de l'UE et leurs parents, souvent décisionnaires de l'achat.</p>
-          <p className="text-[28px] text-bone/75">Volume : 1 800 puis 4 500 commandes.</p>
+          <p className="text-[28px] text-bone/75">Volume : 1 650 puis 5 300 commandes.</p>
           <div className="mt-auto border-t border-white/15 pt-5">
             <span className="text-[24px] text-bone/60">Résultat net A2</span>
             <div className="text-[68px] font-black leading-none">
-              <Count to={22923} suffix=" €" />
+              <Count to={29501} suffix=" €" />
             </div>
           </div>
         </Card>
@@ -434,11 +445,11 @@ const twoSteps: SlideDef = {
           <span className="font-label text-[22px] font-bold uppercase tracking-[0.14em] text-magenta">Temps 2 · année 3</span>
           <h3 className="text-[48px] font-black leading-tight">On s'ouvre au streetwear</h3>
           <p className="text-[28px] text-bone/75">Cible : les ados qui aiment l'univers, avec ou sans corset.</p>
-          <p className="text-[28px] text-bone/75">Volume : 9 500 commandes, dont 5 000 streetwear.</p>
+          <p className="text-[28px] text-bone/75">Volume : 17 000 commandes, dont 10 500 streetwear.</p>
           <div className="mt-auto border-t border-white/15 pt-5">
             <span className="text-[24px] text-bone/60">Résultat net A3</span>
             <div className="text-[68px] font-black leading-none text-magenta">
-              <Count to={76648} suffix=" €" />
+              <Count to={150466} suffix=" €" />
             </div>
           </div>
         </Card>
@@ -446,7 +457,7 @@ const twoSteps: SlideDef = {
       <R className="flex items-center gap-5 text-[28px] text-bone/80">
         <Star className="size-9 text-magenta" />
         <span>
-          Comme <b>The North Face</b> et <b>Patagonia</b> : partir d'un besoin précis, en faire une force, puis élargir.
+          Comme <b>The North Face</b> et <b>Carhartt</b> : partir d'un besoin précis, en faire une force, puis élargir.
         </span>
       </R>
     </Frame>
@@ -489,18 +500,21 @@ const production: SlideDef = {
         </div>
       </R>
       <div className="flex gap-6">
-        <Stat label="de transport DDP pour 500 pièces, douane comprise">
-          <Count to={250} suffix=" €" />
+        <Stat label="coût d'un tee-shirt livré à Lyon, douane comprise">
+          <Count to={5} suffix=" €" />
         </Stat>
-        <Stat label="coût moyen d'une pièce arrivée à Lyon">
-          <Count to={7.25} d={2} suffix=" €" />
+        <Stat label="coût d'un hoodie livré à Lyon, douane comprise">
+          <Count to={10} suffix=" €" />
+        </Stat>
+        <Stat label="coût logistique par commande (expédition aller)">
+          <Count to={7} suffix=" €" />
         </Stat>
         <Stat accent label="de commandes retournées, remboursées et triées à Lyon">
           <Count to={15} suffix=" %" />
         </Stat>
       </div>
       <Foot>
-        Première commande : 500 pièces, 10 références (2 modèles en 5 coloris), 50 pièces par référence, après validation du prototype. À terme, objectif de production européenne.
+        Première commande : 500 pièces, 10 modèles (5 tee-shirts et 5 hoodies), 50 pièces par modèle, après validation du prototype. À terme, objectif de production européenne.
       </Foot>
     </Frame>
   ),
@@ -540,7 +554,7 @@ const channels: SlideDef = {
           Commission cible : <b className="text-magenta">7 %</b> du CA HT
         </span>
       </R>
-      <Foot>Les partenariats doivent encore être formalisés : le rôle de PROTEOR et l'absence de commission sont à confirmer par écrit.</Foot>
+      <Foot>Les partenariats doivent encore être formalisés par écrit (rôles et modalités).</Foot>
     </Frame>
   ),
 }
@@ -550,32 +564,32 @@ const marketingSlide: SlideDef = {
   id: 'marketing',
   speaker: 'Intervenant 4',
   notes:
-    "Le budget marketing augmente avec les ventes (35 % fixe, 65 % qui suit les ventes) alors que le coût pour acquérir un nouveau client baisse : réseau PROTEOR, associations, parrainage et contenu réutilisé apportent des clients à coût faible.",
+    "Le budget marketing augmente avec les ventes (52 000 €, 85 000 € puis 245 000 €) alors que le coût pour acquérir une commande baisse : 31,5 € en A1, 16 € en A2, 14,4 € en A3. Réseau PROTEOR, associations, avis clients et parrainage prennent le relais de la publicité payée. En A1, avec les 19 000 € de campagne de prélancement, le coût complet atteint environ 43 € par commande. Cette baisse est l'hypothèse centrale du modèle, testée dans les sensibilités.",
   node: (
     <Frame>
       <Chip>10 · Le marketing</Chip>
       <H2>
-        Plus on grandit, <Mag>moins un client coûte.</Mag>
+        Plus on grandit, <Mag>moins une commande coûte.</Mag>
       </H2>
       <R className={cn(glass, 'flex flex-1 flex-col justify-center gap-8 p-12')}>
         {['A1', 'A2', 'A3'].map((y, k) => (
-          <div key={y} className="grid grid-cols-[90px_1fr_420px] items-center gap-8">
+          <div key={y} className="grid grid-cols-[90px_1fr_460px] items-center gap-8">
             <span className="text-[44px] font-black">{y}</span>
             <div className="h-[72px] rounded-2xl bg-white/[0.06]">
               <div
-                className="grow-x flex h-full items-center rounded-2xl bg-magenta px-6 text-[32px] font-black text-ink"
-                style={{ width: `${(marketing.budget[k] / 100000) * 100}%`, ['--d' as string]: `${0.9 + k * 0.3}s` }}
+                className="grow-x flex h-full min-w-[230px] items-center rounded-2xl bg-magenta px-6 text-[32px] font-black text-ink"
+                style={{ width: `${(marketing.budget[k] / 250000) * 100}%`, ['--d' as string]: `${0.9 + k * 0.3}s` }}
               >
                 {fmt(marketing.budget[k])} €
               </div>
             </div>
             <span className="text-[30px] text-bone/80">
-              <b className="text-[52px] font-black text-bone">{fmt(marketing.cac[k], 1)} €</b> par nouveau client
+              <b className="text-[52px] font-black text-bone">{fmt(marketing.cac[k], 1)} €</b> par commande
             </span>
           </div>
         ))}
       </R>
-      <Foot>Budget marketing récurrent HT. 35 % du marketing est fixe et 65 % suit les ventes.</Foot>
+      <Foot>Marketing récurrent HT. En A1, 19 000 € de campagne de prélancement s'y ajoutent : le coût complet atteint environ 43 € par commande.</Foot>
     </Frame>
   ),
 }
@@ -586,46 +600,45 @@ const revenueBuild: SlideDef = {
   speaker: 'Intervenant 5',
   minutes: '2 min',
   notes:
-    "Le chiffre d'affaires se calcule en prix, quantité et hypothèses. Prix moyen de 58 € TTC par pièce, 1,2 pièce par commande : 69,60 € TTC, soit 57,52 € HT avec 21 % de TVA moyenne. En A1 : 1 800 commandes, moins 15 % de retours remboursés, plus le port facturé, soit 99 758 € HT.",
+    "Le chiffre d'affaires se calcule en prix, quantité et hypothèses. Le prix moyen de 58 € TTC par pièce vient du mix de ventes : 55 % de tee-shirts à 40 € et 45 % de hoodies à 80 €, soit 22 € plus 36 €. Le panier de 1,2 pièce par commande est une hypothèse : la plupart des clients prennent une pièce, certains un tee-shirt et un hoodie. Elle est à valider sur les premières ventes. 58 € fois 1,2 donne 69,60 € TTC, soit 57,52 € HT avec 21 % de TVA moyenne. En A1 : 1 650 commandes, moins 15 % de retours remboursés, plus le port facturé, soit 91 445 € HT.",
   node: (
     <Frame>
       <Chip>11 · Le modèle économique</Chip>
       <H2>
         Prix × quantité, <Mag>rien de plus.</Mag>
       </H2>
-      <div className="flex items-center gap-5">
+      <div className="flex items-stretch gap-5">
         {[
-          { n: <Count to={priceBuild.avgPriceTtc} suffix=" €" />, t: 'prix moyen TTC par pièce' },
+          { n: <Count to={priceBuild.avgPriceTtc} suffix=" €" />, t: 'prix moyen TTC par pièce', s: '55 % de tee-shirts à 40 € + 45 % de hoodies à 80 €' },
           { op: '×' },
-          { n: <Count to={priceBuild.piecesPerOrder} d={1} />, t: 'pièce par commande' },
+          { n: <Count to={priceBuild.piecesPerOrder} d={1} />, t: 'pièce par commande', s: 'hypothèse : un tee-shirt, parfois un tee-shirt et un hoodie' },
           { op: '=' },
-          { n: <Count to={priceBuild.basketHt} d={2} suffix=" €" />, t: 'HT par commande (TVA moyenne 21 %)', accent: true },
-          { op: '×' },
-          { n: 'N', t: 'commandes, moins 15 % de retours' },
+          { n: <Count to={priceBuild.basketHt} d={2} suffix=" €" />, t: 'HT par commande', s: '69,60 € TTC, TVA moyenne de 21 %', accent: true },
         ].map((x, k) =>
           x.op ? (
-            <R key={k} className="text-[64px] font-black text-bone/40">
+            <R key={k} className="flex items-center text-[64px] font-black text-bone/40">
               {x.op}
             </R>
           ) : (
             <Card key={k} accent={x.accent} className="flex flex-1 flex-col gap-2 px-7 py-6">
               <span className={cn('text-[62px] font-black leading-none tracking-[-0.04em]', x.accent && 'text-magenta')}>{x.n}</span>
-              <span className="text-[23px] leading-snug text-bone/70">{x.t}</span>
+              <span className="text-[26px] font-bold leading-snug">{x.t}</span>
+              <span className="text-[22px] leading-snug text-bone/65">{x.s}</span>
             </Card>
           ),
         )}
       </div>
       <R className={cn(glass, 'flex flex-1 flex-col justify-center gap-5 p-10')}>
-        <p className="text-[26px] font-bold uppercase tracking-[0.08em] text-bone/60">Exemple, année 1</p>
+        <p className="text-[26px] font-bold uppercase tracking-[0.08em] text-bone/60">Exemple, année 1 : 1 650 commandes</p>
         <div className="flex items-center gap-5 text-[34px]">
           {[
-            ['1 800 × 57,52 €', '103 537 €', 'ventes HT'],
-            ['−', '15 531 €', '15 % de retours'],
-            ['+', '11 752 €', 'port facturé (7,90 € TTC)'],
-            ['=', '99 758 €', "chiffre d'affaires net HT"],
+            ['1 650 × 57,52 €', '94 909 €', 'ventes HT'],
+            ['−', '14 236 €', '15 % de retours'],
+            ['+', '10 773 €', 'port facturé au client (7,90 € TTC)'],
+            ['=', '91 445 €', "chiffre d'affaires net HT"],
           ].map(([a, b, c], k) => (
             <R key={k} className={cn('flex flex-1 flex-col', k === 3 && 'text-magenta')}>
-              <span className="text-[24px] text-bone/60">{a === '−' || a === '+' || a === '=' ? a : a}</span>
+              <span className="text-[24px] text-bone/60">{a}</span>
               <b className="text-[52px] font-black leading-tight">{b}</b>
               <span className="text-[22px] text-bone/60">{c}</span>
             </R>
@@ -641,7 +654,7 @@ const revenue3: SlideDef = {
   id: 'trois-ans',
   speaker: 'Intervenant 5',
   notes:
-    "Scénario central sur trois ans : 1 800 commandes en A1, 4 500 en A2, 9 500 en A3 dont 5 000 hors corset. Le volume corset reste à 4 500 car la niche se sature ; la croissance vient de l'ouverture au streetwear en année 3, environ 0,015 % des 33,2 millions de jeunes de l'UE.",
+    "Scénario central sur trois ans : 1 650 commandes en A1, 5 300 en A2, 17 000 en A3 dont 10 500 streetwear. Le chiffre d'affaires est multiplié par 3,2 chaque année. Les commandes corset sur trois ans représentent environ 9 600 familles, soit près de 10 % du marché : c'est l'hypothèse la plus exigeante du plan, suivie en priorité. L'ouverture au streetwear en année 3 n'a lieu que si les critères sont remplis : résultat positif en A2, retours sous 18 %, trésorerie au-dessus de 20 000 €.",
   node: (
     <Frame>
       <Chip>12 · Les prévisions</Chip>
@@ -650,7 +663,7 @@ const revenue3: SlideDef = {
       </H2>
       <R className={cn(glass, 'flex flex-1 items-end justify-around gap-10 px-14 pb-10 pt-8')}>
         {['A1', 'A2', 'A3'].map((y, k) => {
-          const heights = [14, 34, 72]
+          const heights = [9, 28, 85]
           return (
             <div key={y} className="flex h-full flex-1 flex-col items-center justify-end gap-3">
               <span className={cn('text-[56px] font-black leading-none tabular-nums', k === 2 && 'text-magenta')}>
@@ -664,13 +677,13 @@ const revenue3: SlideDef = {
               <span className="text-center text-[24px] leading-snug text-bone/70">
                 {fmt(orders.total[k])} commandes
                 <br />
-                {k === 2 ? '4 500 corset · 5 000 streetwear' : `${fmt(orders.corset[k])} corset`}
+                {k === 2 ? '6 500 corset · 10 500 streetwear' : `${fmt(orders.corset[k])} corset`}
               </span>
             </div>
           )
         })}
       </R>
-      <Foot>Chiffre d'affaires net HT, après 15 % de retours remboursés, port facturé inclus.</Foot>
+      <Foot>Chiffre d'affaires net HT, après 15 % de retours remboursés, port facturé inclus. Multiplié par 3,2 chaque année.</Foot>
     </Frame>
   ),
 }
@@ -680,41 +693,37 @@ const pnlSlide: SlideDef = {
   id: 'resultat',
   speaker: 'Intervenant 5',
   notes:
-    "Année 1 : phase d'investissement, perte nette de 36 396 € (prélancement, acquisition des premiers clients, structuration). Année 2 : résultat net positif de 22 923 €. Année 3 : 76 648 €. Les charges s'adaptent aux volumes : 35 % du marketing est fixe, 65 % suit les ventes.",
+    "Année 1 : phase d'investissement, perte nette de 66 943 € (prélancement de 30 000 € de charges de lancement, 52 000 € de marketing, rémunérations). Année 2 : résultat net positif de 29 501 €. Année 3 : 150 466 €. La marge sur coûts variables est d'environ deux tiers du chiffre d'affaires : la rentabilité se joue sur le marketing et les charges fixes. Le compte de résultat détaillé est en annexe (touche A) pour les questions.",
   node: (
     <Frame>
-      <Chip>13 · Le compte de résultat</Chip>
+      <Chip>13 · Le résultat</Chip>
       <H2>
         Une perte au lancement, <Mag>puis rentable.</Mag>
       </H2>
-      <R className={cn(glass, 'flex flex-col px-9 py-4')}>
-        <div className="grid grid-cols-[1fr_260px_260px_260px] px-4 py-3 text-[22px] font-bold uppercase tracking-[0.08em] text-bone/60">
-          <span>En euros HT</span>
-          {['A1', 'A2', 'A3'].map((y) => (
-            <span key={y} className="text-right">
-              {y}
-            </span>
-          ))}
-        </div>
-        {pnl.map((row) => (
-          <div
-            key={row.label}
-            className={cn(
-              'grid grid-cols-[1fr_260px_260px_260px] items-center border-t border-white/10 px-4 py-[10px] text-[28px]',
-              row.highlight && 'my-1 rounded-2xl border-t-0 bg-magenta/20 font-bold',
-              row.strong && 'text-[32px] font-black',
-            )}
-          >
-            <span>{row.label}</span>
-            {row.values.map((v, k) => (
-              <span key={k} className={cn('text-right tabular-nums', v < 0 && !row.highlight && 'text-bone/55', row.strong && k === 2 && 'text-magenta')}>
-                {money(v)}
+      <div className="flex flex-1 gap-6">
+        {['A1', 'A2', 'A3'].map((y, k) => {
+          const v = keyFigures.netResult[k]
+          return (
+            <Card key={y} accent={k === 2} className="flex flex-1 flex-col justify-center gap-3">
+              <span className="font-label text-[24px] font-bold uppercase tracking-[0.14em] text-bone/60">Année {k + 1}</span>
+              <span className={cn('whitespace-nowrap text-[96px] font-black leading-none tracking-[-0.04em]', v < 0 ? 'text-bone/70' : 'text-magenta')}>
+                <Count to={Math.abs(v)} prefix={v < 0 ? '−' : '+'} suffix=" €" />
               </span>
-            ))}
-          </div>
-        ))}
-      </R>
-      <Foot>Prélancement de 19 000 € rattaché à l'année 1. Impôt de 15 392 € en année 3 après report des pertes.</Foot>
+              <span className="text-[28px] text-bone/70">résultat net</span>
+              <span className="text-[26px] text-bone/60">{['Lancement et marketing européen', 'Premier résultat positif', 'Ouverture au streetwear'][k]}</span>
+            </Card>
+          )
+        })}
+      </div>
+      <div className="flex gap-6">
+        <Stat label="de marge sur coûts variables, stable sur 3 ans">
+          <Count to={66.7} d={1} suffix=" %" />
+        </Stat>
+        <Stat accent label="d'excédent brut d'exploitation en A3 (20 % du CA)">
+          <Count to={187} suffix=" k€" />
+        </Stat>
+      </div>
+      <Foot>Détail poste par poste en annexe. Prélancement de 19 000 € rattaché à l'année 1.</Foot>
     </Frame>
   ),
 }
@@ -724,21 +733,21 @@ const financing: SlideDef = {
   id: 'financement',
   speaker: 'Intervenant 5',
   notes:
-    "Financement : 84 000 € d'apports en capital, soit 14 000 € par associé, déjà confirmés par les six associés. Ni prêt bancaire ni subvention retenus dans le scénario central : ils restent une marge de manœuvre. 19 000 € de démarrage : 8 000 € de prélancement, 4 000 € de prototypes, 2 000 € de création et administratif, 2 000 € de site, 3 000 € de conformité européenne.",
+    "Financement de 110 000 €, sans dette : 60 000 € de capital apportés par les six associés (10 000 € chacun) et 50 000 € de subvention BPI. 30 000 € servent au lancement : 19 000 € de prélancement, 4 000 € de prototypes et tests, 2 000 € de création et administratif, 2 000 € de site et 3 000 € de conformité européenne. 11 825 € vont à l'équipement, au stock initial et à la TVA avancée. Il reste 68 175 € de trésorerie, qui finance les pertes de l'année 1. Besoin maximal de financement : 89 406 €, ou 109 406 € avec 20 000 € de réserve. Les associés peuvent apporter 30 000 € de plus.",
   node: (
     <Frame>
       <Chip>14 · Le financement</Chip>
       <H2>
-        84 000 € de capital, <Mag>déjà confirmés.</Mag>
+        110 000 € de financement, <Mag>sans dette.</Mag>
       </H2>
       <div className="flex flex-1 items-center gap-16">
         <R anim="z" className="relative shrink-0">
           <Donut size={520} parts={funding.uses.map((u) => ({ value: u.value, color: u.color }))} />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="text-[78px] font-black leading-none tracking-[-0.04em]">
-              <Count to={84000} suffix=" €" />
+              <Count to={funding.total} suffix=" €" />
             </span>
-            <span className="mt-2 text-[26px] text-bone/65">6 associés × 14 000 €</span>
+            <span className="mt-2 text-[26px] text-bone/65">60 000 € capital + 50 000 € BPI</span>
           </div>
         </R>
         <div className="flex flex-1 flex-col gap-2">
@@ -746,16 +755,16 @@ const financing: SlideDef = {
             <R key={u.label} className="grid grid-cols-[28px_1fr_150px] items-center gap-5 px-4 py-3 text-[27px]">
               <i className="block size-6 rounded-lg" style={{ backgroundColor: u.color }} />
               <span>{u.label}</span>
-              <span className="text-right font-black tabular-nums">{fmt(u.value)}</span>
+              <span className="text-right font-black tabular-nums">{fmt(u.value)} €</span>
             </R>
           ))}
           <R className={cn(glass, 'mt-3 flex items-center justify-between px-8 py-5 text-[26px]')}>
             <span className="text-bone/75">Besoin maximal de financement</span>
             <span>
               <b className="text-[40px] font-black text-magenta">{fmt(funding.maxNeed)} €</b>
-              <span className="ml-3 text-bone/60">{fmt(funding.maxNeedWithReserve)} € avec réserve</span>
             </span>
           </R>
+          <R className="px-4 text-[24px] text-bone/60">Les associés peuvent apporter {fmt(funding.extraCapacity)} € de plus si besoin.</R>
         </div>
       </div>
     </Frame>
@@ -767,12 +776,12 @@ const scenariosSlide: SlideDef = {
   id: 'scenarios',
   speaker: 'Intervenant 5',
   notes:
-    "Seuil de rentabilité : environ 3 799 commandes par an, soit 210 544 € de chiffre d'affaires HT. Le scénario central prévoit 4 500 commandes en A2 et le dépasse. Seul le central tient avec 84 000 €. Le scénario prudent (35 % de commandes en moins) demanderait 106 080 € de financement complémentaire : c'est le risque principal.",
+    "Seuil de rentabilité : 4 421 commandes par an, soit environ 245 000 € de chiffre d'affaires HT. Le scénario central prévoit 5 300 commandes en A2 et le dépasse. Le scénario prudent (35 % de commandes en moins) est le risque principal : si l'on maintient le marketing, la trésorerie devient négative et il faudrait 123 662 € de financement complémentaire. Avec la règle de pilotage (marketing réduit de 35 % en A2 et 45 % en A3), ce besoin tombe à 45 021 €, et la trésorerie A3 reste positive à 53 488 €. Le détail des quatre scénarios est en annexe.",
   node: (
     <Frame>
       <Chip>15 · Seuil et scénarios</Chip>
       <H2>
-        Un central solide, <Mag>un prudent à financer.</Mag>
+        Un central solide, <Mag>un prudent maîtrisé.</Mag>
       </H2>
       <div className="flex flex-1 items-stretch gap-6">
         {scenarios.map((s) => (
@@ -782,23 +791,25 @@ const scenariosSlide: SlideDef = {
             {[
               ['Commandes A3', fmt(s.orders3)],
               ['CA A3', `${fmt(s.revenue3)} €`],
-              ['Résultat avant impôt A2', `${money(s.result2)} €`],
-              ['Point bas trésorerie', `${money(s.lowCash)} €`],
+              ['Trésorerie fin A3', `${fmt(s.cash3)} €`],
             ].map(([a, b]) => (
               <div key={a} className="flex items-baseline justify-between gap-4 text-[26px]">
                 <span className="text-bone/70">{a}</span>
-                <b className={cn('text-[30px] tabular-nums', b.startsWith('(') && 'text-bone/55')}>{b}</b>
+                <b className="text-[30px] tabular-nums">{b}</b>
               </div>
             ))}
+            {s.cash3Kept !== undefined && (
+              <p className="mt-auto text-[22px] leading-snug text-bone/60">Avec marketing adapté. Marketing maintenu : {money(s.cash3Kept)} €.</p>
+            )}
           </Card>
         ))}
       </div>
       <div className="flex gap-6">
-        <Stat label="commandes par an pour atteindre le seuil de rentabilité (210 544 € de CA HT)">
+        <Stat label={`commandes par an pour atteindre le seuil de rentabilité (${fmt(breakeven.revenue)} € de CA HT), dépassé dès A2`}>
           <Count to={breakeven.orders} />
         </Stat>
-        <Stat accent label="de financement complémentaire dans le prudent, réserve de 20 000 € comprise">
-          <Count to={breakeven.extraFunding} suffix=" €" />
+        <Stat accent label="de financement complémentaire dans le prudent avec marketing adapté, contre 123 662 € si maintenu">
+          <Count to={breakeven.extraAdapted} suffix=" €" />
         </Stat>
       </div>
     </Frame>
@@ -811,17 +822,17 @@ const treasury: SlideDef = {
   speaker: 'Intervenant 6',
   minutes: '1 min 50',
   notes:
-    "Plancher de sécurité fixé à 20 000 €. Dans le scénario central, la trésorerie ne descend jamais sous ce seuil pendant trois ans. Point bas de 25 163 € en août de l'année 2, après l'investissement de début d'année et avant le pic d'automne.",
+    "Plancher de sécurité fixé à 20 000 €. Dans le scénario central, la trésorerie reste au-dessus de ce seuil pendant les 36 mois modélisés. Clôture : 32,7 k€ en A1, 53,6 k€ en A2, 179,4 k€ en A3. Point bas de 20 594 € en A2 : la marge est très faible, car la croissance consomme du fonds de roulement et du marketing avant que les revenus n'arrivent. C'est pourquoi la règle de pilotage existe.",
   node: (
     <Frame>
       <Chip>16 · La trésorerie</Chip>
       <H2>
-        Au-dessus de 20 000 € <Mag>pendant 36 mois.</Mag>
+        Au-dessus de 20 000 € <Mag>pendant 36 mois.</Mag>
       </H2>
       <R className={cn(glass, 'flex-1 px-10 py-6')}>
         <TreasuryChart />
       </R>
-      <Foot>Scénario central, soldes de fin de mois. Point bas de 25 163 € en août de l'année 2.</Foot>
+      <Foot>Scénario central. Point bas de {fmt(cash.low[1])} € en année 2 : marge faible au-dessus du plancher, d'où la règle de pilotage.</Foot>
     </Frame>
   ),
 }
@@ -831,7 +842,7 @@ const risks: SlideDef = {
   id: 'risques',
   speaker: 'Intervenant 6',
   notes:
-    "Trois paramètres font basculer le projet : le panier de 1,2 pièce, la facturation du port et le volume. Règle de pilotage : si la projection de trésorerie à 13 semaines passe sous 20 000 €, ou si les retours dépassent 18 % sur deux cohortes, on gèle le marketing payé et on active un financement complémentaire.",
+    "Trois paramètres font basculer le projet : le volume de commandes, le panier de 1,2 pièce et la facturation du port. Une hausse de 25 % du coût d'acquisition ramène le point bas de trésorerie à 7 370 €, écart que les 30 000 € d'apport complémentaire des associés permettent de couvrir. Règle de pilotage : si la projection de trésorerie à 13 semaines passe sous 20 000 €, ou si les retours dépassent 18 % sur deux cohortes, on gèle le marketing payé et on active un financement complémentaire. Le tableau complet des sensibilités est en annexe.",
   node: (
     <Frame>
       <Chip>17 · Les risques</Chip>
@@ -840,28 +851,26 @@ const risks: SlideDef = {
       </H2>
       <div className="flex flex-1 gap-8">
         <R className={cn(glass, 'flex flex-[1.4] flex-col justify-center gap-2 px-9 py-6')}>
-          <p className="mb-2 text-[24px] font-bold uppercase tracking-[0.08em] text-bone/60">Excédent d'exploitation A2, un seul paramètre change</p>
-          {sensitivities.map((s, k) => (
-            <div key={s.label} className="grid grid-cols-[1fr_190px] items-center gap-6 border-t border-white/10 py-3 text-[27px]">
+          <p className="mb-2 text-[24px] font-bold uppercase tracking-[0.08em] text-bone/60">Point bas de trésorerie, un seul paramètre change</p>
+          {sensitivities.slice(0, 4).map((s) => (
+            <div key={s.label} className="grid grid-cols-[1fr_210px] items-center gap-6 border-t border-white/10 py-4 text-[27px]">
               <span>{s.label}</span>
-              <span className={cn('text-right text-[32px] font-black tabular-nums', s.ebe2 < 5000 && 'text-magenta')} style={{ animationDelay: `${k * 80}ms` }}>
-                {money(s.ebe2)} €
-              </span>
+              <span className={cn('text-right text-[34px] font-black tabular-nums', s.low < 20000 && 'text-magenta')}>{money(s.low)} €</span>
             </div>
           ))}
-          <p className="mt-2 text-[24px] text-bone/60">Référence centrale : 25 923 €.</p>
+          <p className="mt-2 text-[24px] text-bone/60">Référence centrale : 20 594 €. Plancher de sécurité : 20 000 €.</p>
         </R>
         <div className="flex flex-1 flex-col gap-6">
           <Card accent className="flex flex-col gap-3">
             <span className="font-label text-[22px] font-bold uppercase tracking-[0.1em] text-magenta">Règle de pilotage</span>
             <p className="text-[30px] leading-snug">
-              Trésorerie à 13 semaines sous 20 000 € ou retours au-dessus de 18 % sur deux cohortes :{' '}
+              Trésorerie à 13 semaines sous 20 000 € ou retours au-dessus de 18 % sur deux cohortes :{' '}
               <b>on gèle le marketing payé et on active un financement complémentaire.</b>
             </p>
           </Card>
           <Card className="flex flex-col gap-3">
             <span className="font-label text-[22px] font-bold uppercase tracking-[0.1em] text-bone/60">Les trois paramètres décisifs</span>
-            {['Le panier de 1,2 pièce', 'La facturation du port', 'Le volume de commandes'].map((t) => (
+            {['Le volume de commandes', 'Le panier de 1,2 pièce', 'La facturation du port'].map((t) => (
               <p key={t} className="flex items-center gap-4 text-[28px]">
                 <Star className="size-7 text-magenta" />
                 {t}
@@ -942,27 +951,27 @@ const ask: SlideDef = {
   id: 'demande',
   speaker: 'Intervenant 6',
   notes:
-    "Notre demande : un financement de 84 000 € en capital, soit 14 000 € par associé, déjà confirmés par les six membres de l'équipe. Notre promesse : rentable en année 2, trésorerie au-dessus de 20 000 € sur 36 mois, capitaux propres de 84 000 à 147 175 € fin A3. Aucune commande du lot de 500 pièces avant la validation du prototype.",
+    "Notre financement : 110 000 €, sans dette. 60 000 € de capital apportés par les six associés, soit 10 000 € chacun, et 50 000 € de subvention BPI. Notre promesse : rentable dès l'année 2 (29 501 € de résultat net), trésorerie au-dessus de 20 000 € sur 36 mois, besoin maximal de financement de 89 406 € couvert par ce financement. Aucune commande du lot de 500 pièces avant la validation du prototype.",
   bg: 'twill',
   node: (
     <Frame className="justify-center">
-      <Chip>19 · Demande et promesse</Chip>
+      <Chip>19 · Financement et promesse</Chip>
       <div className="flex items-center gap-20">
         <div className="flex flex-1 flex-col gap-4">
-          <span className="font-label text-[26px] font-bold uppercase tracking-[0.14em] text-magenta">Notre demande</span>
+          <span className="font-label text-[26px] font-bold uppercase tracking-[0.14em] text-magenta">Notre financement</span>
           <R anim="z" as="span" className="whitespace-nowrap text-[210px] font-black leading-[0.9] tracking-[-0.06em] text-magenta">
-            <Count to={84000} duration={2000} suffix=" €" />
+            <Count to={110000} duration={2000} suffix=" €" />
           </R>
-          <R as="p" className="max-w-[700px] text-[34px] leading-snug text-bone/80">
-            de capital pour lancer BACK2BACK, apportés par les six associés : 14 000 € chacun.
+          <R as="p" className="max-w-[760px] text-[34px] leading-snug text-bone/80">
+            pour lancer BACK2BACK, sans dette : 60 000 € de capital (10 000 € par associé) et 50 000 € de subvention BPI.
           </R>
         </div>
         <div className="flex w-[760px] flex-col gap-4">
           <span className="font-label text-[26px] font-bold uppercase tracking-[0.14em] text-bone/60">Notre promesse</span>
           {[
             'Une marque rentable dès l’année 2',
-            'Une trésorerie au-dessus de 20 000 € pendant 36 mois',
-            'Des capitaux propres de 84 000 € à 147 175 € fin A3',
+            'Une trésorerie au-dessus de 20 000 € pendant 36 mois',
+            'Un besoin maximal de financement de 89 406 €, couvert sans dette',
             'Aucune commande du lot avant la validation du prototype',
           ].map((t, k) => (
             <R key={t} className={cn(glass, 'flex items-center gap-6 px-8 py-6 text-[31px] leading-snug', k === 3 && 'border-magenta/60')}>
@@ -1000,6 +1009,200 @@ const thanks: SlideDef = {
   ),
 }
 
+/* ------------------------------------------------------------------ Annexes (masquées, touche A) */
+const AppTable = ({ children }: { children: ReactNode }) => (
+  <R className={cn(glass, 'flex flex-col px-9 py-4 text-[24px]')}>{children}</R>
+)
+
+const appendixPnl: SlideDef = {
+  id: 'annexe-resultat',
+  speaker: 'Annexe',
+  appendix: true,
+  notes: "Compte de résultat prévisionnel détaillé, scénario central (tableau 16 du business plan). Impôt de A3 après report des déficits de A1 : 15 % jusqu'à 42 500 € de bénéfice, 25 % au-delà.",
+  node: (
+    <Frame className="gap-5">
+      <Chip>Annexe A · Compte de résultat prévisionnel</Chip>
+      <H2 className="!text-[58px]">
+        Le détail, <Mag>poste par poste.</Mag>
+      </H2>
+      <AppTable>
+        <div className="grid grid-cols-[1fr_230px_230px_230px] px-4 py-2 text-[20px] font-bold uppercase tracking-[0.08em] text-bone/60">
+          <span>En euros HT</span>
+          {['A1', 'A2', 'A3'].map((y) => (
+            <span key={y} className="text-right">
+              {y}
+            </span>
+          ))}
+        </div>
+        {pnl.map((row) => (
+          <div
+            key={row.label}
+            className={cn(
+              'grid grid-cols-[1fr_230px_230px_230px] items-center border-t border-white/10 px-4 py-[7px]',
+              row.highlight && 'my-0.5 rounded-xl border-t-0 bg-magenta/20 font-bold',
+              row.strong && 'font-black',
+            )}
+          >
+            <span>{row.label}</span>
+            {row.values.map((v, k) => (
+              <span key={k} className="text-right tabular-nums">
+                {money(v)}
+              </span>
+            ))}
+          </div>
+        ))}
+      </AppTable>
+    </Frame>
+  ),
+}
+
+const appendixFinancing: SlideDef = {
+  id: 'annexe-financement',
+  speaker: 'Annexe',
+  appendix: true,
+  notes: "Plan de financement initial (tableau 17) et trésorerie annuelle (tableau 18). Le traitement comptable de la subvention BPI sera précisé avec l'expert-comptable.",
+  node: (
+    <Frame className="gap-5">
+      <Chip>Annexe B · Financement et trésorerie</Chip>
+      <H2 className="!text-[58px]">
+        Plan de financement <Mag>et trésorerie.</Mag>
+      </H2>
+      <div className="flex gap-6">
+        <AppTable>
+          <p className="px-4 py-2 text-[20px] font-bold uppercase tracking-[0.08em] text-bone/60">Emplois au démarrage</p>
+          {fundingDetail.uses.map(([a, b]) => (
+            <div key={a} className="grid grid-cols-[1fr_150px] gap-4 border-t border-white/10 px-4 py-2">
+              <span>{a}</span>
+              <span className="text-right tabular-nums">{fmt(b)} €</span>
+            </div>
+          ))}
+          <div className="grid grid-cols-[1fr_150px] gap-4 rounded-xl bg-magenta/20 px-4 py-2 font-black">
+            <span>Total</span>
+            <span className="text-right tabular-nums">110 000 €</span>
+          </div>
+        </AppTable>
+        <AppTable>
+          <p className="px-4 py-2 text-[20px] font-bold uppercase tracking-[0.08em] text-bone/60">Ressources</p>
+          {fundingDetail.resources.map(([a, b]) => (
+            <div key={a} className="grid grid-cols-[1fr_150px] gap-4 border-t border-white/10 px-4 py-2">
+              <span>{a}</span>
+              <span className="text-right tabular-nums">{fmt(b)} €</span>
+            </div>
+          ))}
+          <div className="grid grid-cols-[1fr_150px] gap-4 rounded-xl bg-magenta/20 px-4 py-2 font-black">
+            <span>Total</span>
+            <span className="text-right tabular-nums">110 000 €</span>
+          </div>
+        </AppTable>
+      </div>
+      <AppTable>
+        <div className="grid grid-cols-[1fr_200px_200px_200px] px-4 py-2 text-[20px] font-bold uppercase tracking-[0.08em] text-bone/60">
+          <span>Trésorerie (€)</span>
+          {['A1', 'A2', 'A3'].map((y) => (
+            <span key={y} className="text-right">
+              {y}
+            </span>
+          ))}
+        </div>
+        {[
+          ['Résultat net + amortissements', [-65443, 32501, 155466]],
+          ['Variation du BFR', [-7325, -7109, -23696]],
+          ['Investissements HT', [-4500, -4500, -6000]],
+          ['Trésorerie de clôture', cash.close],
+          ['Point bas de l’année', cash.low],
+        ].map(([a, v]) => (
+          <div key={a as string} className="grid grid-cols-[1fr_200px_200px_200px] border-t border-white/10 px-4 py-2">
+            <span>{a as string}</span>
+            {(v as number[]).map((x, k) => (
+              <span key={k} className="text-right tabular-nums">
+                {money(x)}
+              </span>
+            ))}
+          </div>
+        ))}
+      </AppTable>
+    </Frame>
+  ),
+}
+
+const appendixScenarios: SlideDef = {
+  id: 'annexe-scenarios',
+  speaker: 'Annexe',
+  appendix: true,
+  notes: "Comparaison des quatre scénarios (tableau 19). Prudent : 35 % de commandes en moins. Haut : 25 % de commandes en plus. « Marketing adapté » applique la règle de pilotage : marketing réduit de 35 % en A2 et de 45 % en A3. Besoin de financement complémentaire du prudent : 103 662 € au point bas (123 662 € avec réserve) si le marketing est maintenu, 25 021 € (45 021 € avec réserve) s'il est adapté.",
+  node: (
+    <Frame className="gap-5">
+      <Chip>Annexe C · Scénarios</Chip>
+      <H2 className="!text-[58px]">
+        Quatre scénarios <Mag>comparés.</Mag>
+      </H2>
+      <AppTable>
+        <div className="grid grid-cols-[1fr_210px_210px_210px_210px] items-end gap-2 px-4 py-2 text-[19px] font-bold uppercase leading-tight tracking-[0.06em] text-bone/60">
+          <span>En euros HT</span>
+          {scenarioTable.cols.map((c) => (
+            <span key={c} className="text-right">
+              {c}
+            </span>
+          ))}
+        </div>
+        {scenarioTable.rows.map(([a, vals], i) => (
+          <div
+            key={a}
+            className={cn(
+              'grid grid-cols-[1fr_210px_210px_210px_210px] gap-2 border-t border-white/10 px-4 py-[9px]',
+              i === scenarioTable.rows.length - 1 && 'my-0.5 rounded-xl border-t-0 bg-magenta/20 font-black',
+            )}
+          >
+            <span>{a}</span>
+            {vals.map((v, k) => (
+              <span key={k} className="text-right tabular-nums">
+                {v}
+              </span>
+            ))}
+          </div>
+        ))}
+      </AppTable>
+    </Frame>
+  ),
+}
+
+const appendixSensitivities: SlideDef = {
+  id: 'annexe-sensibilites',
+  speaker: 'Annexe',
+  appendix: true,
+  notes: "Analyse de sensibilité (tableau 20) : un seul paramètre change à la fois par rapport au scénario central (EBE A2 : 32 501 €, EBE A3 : 187 474 €, point bas de trésorerie : 20 594 €). Les trois paramètres les plus sensibles : le panier de 1,2 pièce, la facturation du port et le volume de commandes.",
+  node: (
+    <Frame className="gap-5">
+      <Chip>Annexe D · Sensibilités</Chip>
+      <H2 className="!text-[58px]">
+        Un paramètre change, <Mag>le reste est fixe.</Mag>
+      </H2>
+      <AppTable>
+        <div className="grid grid-cols-[1fr_210px_210px_260px] px-4 py-2 text-[19px] font-bold uppercase tracking-[0.06em] text-bone/60">
+          <span>Variation testée</span>
+          <span className="text-right">EBE A2</span>
+          <span className="text-right">EBE A3</span>
+          <span className="text-right">Point bas trésorerie</span>
+        </div>
+        <div className="grid grid-cols-[1fr_210px_210px_260px] rounded-xl bg-magenta/20 px-4 py-[9px] font-black">
+          <span>Scénario central</span>
+          <span className="text-right tabular-nums">32 501</span>
+          <span className="text-right tabular-nums">187 474</span>
+          <span className="text-right tabular-nums">20 594</span>
+        </div>
+        {sensitivities.map((s) => (
+          <div key={s.label} className="grid grid-cols-[1fr_210px_210px_260px] border-t border-white/10 px-4 py-[9px]">
+            <span>{s.label}</span>
+            <span className="text-right tabular-nums">{money(s.ebe2)}</span>
+            <span className="text-right tabular-nums">{money(s.ebe3)}</span>
+            <span className={cn('text-right font-bold tabular-nums', s.low < 20000 && 'text-magenta')}>{money(s.low)}</span>
+          </div>
+        ))}
+      </AppTable>
+    </Frame>
+  ),
+}
+
 export const slides: SlideDef[] = [
   cover,
   problem,
@@ -1023,5 +1226,9 @@ export const slides: SlideDef[] = [
   nextSteps,
   ask,
   thanks,
+  appendixPnl,
+  appendixFinancing,
+  appendixScenarios,
+  appendixSensitivities,
 ]
 

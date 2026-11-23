@@ -11,9 +11,13 @@ import { slides } from './slides'
 const W = 1920
 const H = 1080
 
+/** Les diapos d'annexe sont placées en fin de tableau : elles ne font pas partie du déroulé. */
+const mainCount = slides.filter((s) => !s.appendix).length
+
 function readHash() {
+  // Pas d'accès direct aux annexes par l'URL : on ne les ouvre qu'avec la touche A.
   const n = parseInt(window.location.hash.replace('#', ''), 10)
-  return Number.isFinite(n) ? Math.min(slides.length - 1, Math.max(0, n - 1)) : 0
+  return Number.isFinite(n) ? Math.min(mainCount - 1, Math.max(0, n - 1)) : 0
 }
 
 /** Pose l'ordre d'apparition (--i) sur les éléments animés d'une diapo. */
@@ -37,11 +41,23 @@ export default function Presentation() {
   const [hint, setHint] = useState(true)
   const slide = slides[current]
 
+  const inAppendix = current >= mainCount
+  /** Diapo du déroulé d'où l'on est parti vers les annexes. */
+  const cameFrom = useRef(0)
+
   const go = useCallback((n: number) => {
-    setCurrent((c) => Math.min(slides.length - 1, Math.max(0, typeof n === 'number' ? n : c)))
+    setCurrent((c) => Math.min(mainCount - 1, Math.max(0, typeof n === 'number' ? n : c)))
   }, [])
-  const next = useCallback(() => setCurrent((c) => Math.min(slides.length - 1, c + 1)), [])
-  const prev = useCallback(() => setCurrent((c) => Math.max(0, c - 1)), [])
+  // Dans le déroulé on s'arrête à la dernière diapo ; dans les annexes on circule entre elles.
+  const next = useCallback(() => setCurrent((c) => Math.min(c >= mainCount ? slides.length - 1 : mainCount - 1, c + 1)), [])
+  const prev = useCallback(() => setCurrent((c) => (c === mainCount ? cameFrom.current : Math.max(0, c - 1))), [])
+  const toggleAppendix = useCallback(() => {
+    setCurrent((c) => {
+      if (c >= mainCount) return cameFrom.current
+      cameFrom.current = c
+      return mainCount
+    })
+  }, [])
 
   useEffect(() => {
     document.title = 'Présentation · BACK2BACK'
@@ -66,7 +82,7 @@ export default function Presentation() {
   }, [])
 
   useEffect(() => {
-    window.history.replaceState(null, '', `#${current + 1}`)
+    window.history.replaceState(null, '', current < mainCount ? `#${current + 1}` : window.location.pathname)
   }, [current])
 
   useEffect(() => {
@@ -88,13 +104,16 @@ export default function Presentation() {
         e.preventDefault()
         prev()
       } else if (e.key === 'Home') go(0)
-      else if (e.key === 'End') go(slides.length - 1)
+      else if (e.key === 'End') go(mainCount - 1)
+      else if (e.key === 'a' || e.key === 'A' || (e.key === 'Escape' && !document.fullscreenElement)) {
+        if (e.key !== 'Escape' || current >= mainCount) toggleAppendix()
+      }
       else if (e.key === 'f' || e.key === 'F') fullscreen()
       else if (e.key === 'n' || e.key === 'N') setNotes((v) => !v)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [next, prev, go, fullscreen])
+  }, [next, prev, go, fullscreen, toggleAppendix, current])
 
   const touchX = useRef<number | null>(null)
 
@@ -156,13 +175,13 @@ export default function Presentation() {
 
         {hint && (
           <div className={cn(glass, 'font-label absolute left-1/2 top-[44px] z-30 -translate-x-1/2 whitespace-nowrap px-8 py-3.5 text-[22px] text-bone/75')}>
-            ← → pour naviguer · F plein écran · N notes
+            ← → pour naviguer · F plein écran · N notes · A annexes
           </div>
         )}
 
         {/* Interface */}
         <div className="absolute bottom-0 left-0 h-[5px] w-full bg-white/10">
-          <div className="h-full bg-magenta transition-[width] duration-700" style={{ width: `${((current + 1) / slides.length) * 100}%` }} />
+          <div className="h-full bg-magenta transition-[width] duration-700" style={{ width: `${(Math.min(current + 1, mainCount) / mainCount) * 100}%` }} />
         </div>
         <div data-ui className="absolute bottom-[28px] right-[56px] z-30 flex items-center gap-3">
           <Link to="/" aria-label="Retour au site" className="flex size-[58px] items-center justify-center rounded-full border border-white/15 bg-ink/60 backdrop-blur-xl hover:bg-magenta/40">
@@ -175,7 +194,13 @@ export default function Presentation() {
             <ArrowLeft className="size-6" />
           </button>
           <span className="min-w-[110px] text-center text-[26px] font-semibold text-bone/70">
-            <b className="text-bone">{String(current + 1).padStart(2, '0')}</b> / {slides.length}
+            {inAppendix ? (
+              <b className="text-magenta">Annexe {current - mainCount + 1}</b>
+            ) : (
+              <>
+                <b className="text-bone">{String(current + 1).padStart(2, '0')}</b> / {mainCount}
+              </>
+            )}
           </span>
           <button type="button" aria-label="Diapo suivante" onClick={next} className="flex size-[58px] items-center justify-center rounded-full border border-white/15 bg-ink/60 backdrop-blur-xl hover:bg-magenta/40">
             <ArrowRight className="size-6" />
