@@ -170,7 +170,6 @@ const solved = [
   ['Vêtement qui remonte', 'Longueur adaptée'],
   ['Frottements, usure rapide', 'Tissu résistant'],
   ['Coupe trop serrée', 'Coupe oversize'],
-  ['Aspect médical', 'Identité streetwear'],
 ]
 const product: SlideDef = {
   id: 'produit',
